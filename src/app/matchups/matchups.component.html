@@ -1,0 +1,19 @@
+
+
+<form  [formGroup]="igralec" (ngSubmit)="onSubmit()"  >
+  
+  <div>
+    <label>name:
+      <input  name="ime" required  formControlName="ime" >
+    </label>
+	</div>
+
+	
+	
+	<p>Form value: {{ igralec.value | json }}</p>{{todo}}
+
+  
+  <button type="submit" [disabled]="igralec.invalid" class="btn btn-primary" >Submit</button>
+</form>
+
+<button (click)="generateDraw()" class="btn btn-primary" >GenerateDraw</button>
