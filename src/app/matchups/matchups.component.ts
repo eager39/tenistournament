@@ -47,7 +47,8 @@ export class MatchupsComponent implements OnInit {
             for(var i=0;i<add;i++){
               console.log(i);
             data.push({
-              ime: "FREEWIN"
+              ime: "bye",
+              id_igralec:"bye"
             });
             count++;
          
@@ -71,7 +72,13 @@ export class MatchupsComponent implements OnInit {
               used.push(random);
               console.log(data[i].ime + " VS " + (data[random].ime));
   
-              matchups.push([data[i].ime, data[random].ime, 1, "",1, i,0]);
+              matchups.push([data[i].id_igralec, data[random].id_igralec, 1, "",1, i,0]);
+              if(matchups[i][0]=="bye"){
+                matchups[i][3]=matchups[i][1];
+              }
+              if(matchups[i][1]=="bye"){
+                matchups[i][3]=matchups[i][0];
+              }
               /* matchups.push({
                  home: data[i].ime, 
                   away:  data[random].ime,
@@ -101,7 +108,7 @@ export class MatchupsComponent implements OnInit {
               },
               () => {
                 console.log("The POST observable is now completed.");
-              });
+              }); 
         })
       } else {
         console.log("Was drawn");
@@ -168,18 +175,16 @@ var matchups = [];
         let a;
          console.log(count);
          
-        
+    
          
           
-          for (let i = 0; i < count-1; i++) {
-          
+          for (let i = 0; i < count; i++) {
             
              
             for(a=i+1;a<count;a++){ 
-               
-              if(data[i].position==data[a].position){
-              
-              
+           
+              if(data[i].position==data[a].position && data[i].rezultat!="" && data[a].rezultat!=""){
+     
                      matchups.push([data[i].rezultat, data[a].rezultat, parseInt(data[i].round)+1, "", 1,data[i].position,0]);
                      pair++;
                     break;

@@ -39,7 +39,7 @@ app.get('/igralci', function(req, res) {
         // if everything is good, save to request for use in other routes
         req.decoded = decoded;
         console.log(decoded);
-        connection.query('SELECT ime FROM igralec ORDER BY rand()', function(err, results) {
+        connection.query('SELECT ime,id_igralec FROM igralec ORDER BY rand()', function(err, results) {
           if (err) throw err
           var data = results;
           res.send({
@@ -93,7 +93,7 @@ app.get('/nextround', function (req, res) {
         // if everything is good, save to request for use in other routes
         req.decoded = decoded;
         console.log(decoded);
-        var sql="SELECT round,rezultat,turnir,floor(position/2) as position FROM matchup WHERE rezultat!='' and advanced=0";
+        var sql="SELECT round,rezultat,turnir,floor(position/2) as position,away,home FROM matchup WHERE (advanced=0) or away=null or home=null ";
         connection.query(sql, function(err, result) {
           if(err) throw err
           res.write(JSON.stringify({
