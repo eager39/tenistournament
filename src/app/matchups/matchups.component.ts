@@ -155,31 +155,44 @@ onSubmit() {
     }) => {
       isDrawn = data[0].isDrawn;
       console.log(isDrawn);
-      
+      if(isDrawn==1){
 
-     
+     console.log("hahaasdasd");
     this.http.get < any > ("http://localhost:3000/nextround", this.httpOptions).subscribe(({
       data
     }) => {
 console.log(data);
 var matchups = [];
         let count = data.length;
+        let pair=0;
+        let a;
+         console.log(count);
          
-          if(count<2){
-           return false;
-          }
         
          
           
           for (let i = 0; i < count-1; i++) {
           
-            console.log(i);
+            
              
-             // console.log(data[i].rezultat + " VS " + (data[i+1].rezultat));
-            if(data[i].position==data[i+1].position){
-              matchups.push([data[i].rezultat, data[i+1].rezultat, parseInt(data[i].round)+1, "", 1,data[i].position,0]);
-              console.log("pair");
+            for(a=i+1;a<count;a++){ 
+               
+              if(data[i].position==data[a].position){
+              
+              
+                     matchups.push([data[i].rezultat, data[a].rezultat, parseInt(data[i].round)+1, "", 1,data[i].position,0]);
+                     pair++;
+                    break;
+              
             }
+            }
+            
+            
+
+
+
+             // console.log(data[i].rezultat + " VS " + (data[i+1].rezultat));
+            
            
               /* matchups.push({
                  home: data[i].ime, 
@@ -193,7 +206,7 @@ var matchups = [];
                   
               });*/
           } 
-
+          if(pair){
              this.http.post("http://localhost:3000/matchups", matchups)
             .subscribe(
               (val) => {
@@ -206,11 +219,12 @@ var matchups = [];
               () => {
                 console.log("The POST observable is now completed.");
               });
+            }
               
   console.log(matchups);
           
     });
- 
+  }
 }
 )};
 

@@ -78,10 +78,12 @@ app.get('/ifdrawn', function(req, res) {
 });
 app.get('/nextround', function (req, res) {
 
+
+
   var token = req.headers['token'];
 
   if (token) {
-    var ostalo;
+    var ostalo=0;
     var check=0;
     // verifies secret and checks exp
     jwt.verify(token, "asd", function (err, decoded) {
@@ -91,18 +93,26 @@ app.get('/nextround', function (req, res) {
         // if everything is good, save to request for use in other routes
         req.decoded = decoded;
         console.log(decoded);
-        connection.query("SELECT count(rezultat) as ostalo FROM matchup WHERE rezultat='' and round=(select min(round) FROM matchup WHERE turnir=1 and rezultat='' and advanced!=1) group by floor(position/2) ", function (err, results) {
-          ostalo = results[0].ostalo;
-
+        var sql="SELECT round,rezultat,turnir,floor(position/2) as position FROM matchup WHERE rezultat!='' and advanced=0";
+        connection.query(sql, function(err, result) {
+          if(err) throw err
+          res.write(JSON.stringify({
+            data: result
+          }));
+          res.end();
+        });
+        /*
+        connection.query("SELECT count(advanced) as ostalo FROM matchup WHERE  round=(select min(round) FROM matchup WHERE turnir=1 advanced!=1) group by floor(position/2) ", function (err, results) {
+        
           console.log("LOL" + ostalo);
-          if (ostalo >= 1) {
-            connection.query('SELECT round,rezultat,floor(position/2) as position FROM matchup WHERE turnir=1 and rezultat!="" and round=(select min(round) from matchup where turnir=1 and rezultat="") and advanced!=1', function (err, results) {
+          
+            connection.query('SELECT round,rezultat,floor(position/2) as position FROM matchup WHERE turnir=1 and rezultat!="" and round=(select min(round) from matchup where turnir=1 and advanced!=1) and advanced!=1', function (err, results) {
               if (err) console.log(err);
-              console.log("haha");
-              console.log(results);
+            
 
               var data = results;
-              if (data != "") {
+              console.log(data.length);
+              if (parseInt(data.length)>1) {
                 res.write(JSON.stringify({
                   data: data
                 }));
@@ -113,27 +123,32 @@ app.get('/nextround', function (req, res) {
               }
               console.log("CHECK" + check);
             });
-          }
-          if (check === 1) {
-            console.log("CHECK" + check);
-            console.log("else");
-            connection.query('SELECT round,rezultat,floor(position/2) as position FROM matchup WHERE turnir=1 and rezultat!="" and round=(select max(round) from matchup where turnir=1 and rezultat!="") and advanced!=1 ', function (err, results) {
-              if (err) console.log(err);
+           
+          });
+        if(false){
+          console.log("why");
+            connection.query('SELECT round,rezultat,floor(position/2) as position FROM matchup WHERE turnir=1 and rezultat!="" and round=2 and advanced!=1 ', function (err, results) {
+              if (err) throw err;
 
               console.log(err);
-
+              console.log("haha");
               var data = results;
+              console.log("asdasd"+data);
               res.write(JSON.stringify({
                 data: data
               }));
               res.end();
             });
           }
-        });
+       
 
       }
     });
+    */
   }
+});
+
+};
 });
 
 
@@ -145,16 +160,20 @@ app.post('/test', function(request, response) {
   });
 });
 app.post('/matchups', function(request, response) {
-  console.log(request.body[0]);
+  console.log(request.body);
   response.json();  console.log(request.body.length);
  
   var sql1="INSERT INTO matchup (home,away,round,rezultat,turnir,position,advanced) VALUES ?";
   var sql2="UPDATE turnir set isDrawn=1 WHERE id_turnir=1";
+  var sql3="UPDATE matchup set advanced=1 WHERE rezultat in (SELECT * FROM(SELECT home FROM matchup where round>1 )asd) or rezultat in (SELECT * FROM(SELECT away FROM matchup where round>1 )asd) "
   connection.query(sql1,[request.body], function(err, result) {
     if(err) throw err
     connection.query(sql2, function(err, result) {
       if(err) throw err
     });
+  });
+  connection.query(sql3, function(err, result) {
+    if(err) throw err
   });
 
 });
