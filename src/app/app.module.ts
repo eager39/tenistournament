@@ -9,6 +9,7 @@ import { LoginComponent } from './login/login.component';
 import { RegisterComponent } from './register/register.component';
 import { AuthGuard } from './authguard.service';
 import { HomeComponent } from './home/home.component';
+import { UpdateResultsComponent } from './update-results/update-results.component';
 
 
 
@@ -18,7 +19,8 @@ import { HomeComponent } from './home/home.component';
     MatchupsComponent,
     LoginComponent,
     RegisterComponent,
-    HomeComponent
+    HomeComponent,
+    UpdateResultsComponent
   ],
   imports: [
     BrowserModule,

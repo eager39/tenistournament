@@ -114,7 +114,7 @@ export class MatchupsComponent implements OnInit {
         console.log("Was drawn");
       }
     });
-  
+    this.nextRound();
   
   }
  
@@ -150,87 +150,91 @@ onSubmit() {
   
 
   ngOnInit() {
-    this.httpOptions = {
-      headers: new HttpHeaders({
-        'Content-Type': 'application/json',
-        'token': localStorage.getItem("currentUser")
-      })
-    };
-    var isDrawn;
-    this.http.get < any > ("http://localhost:3000/ifdrawn", this.httpOptions).subscribe(({
-      data
-    }) => {
-      isDrawn = data[0].isDrawn;
-      console.log(isDrawn);
-      if(isDrawn==1){
+this.nextRound();
+};
+nextRound(){
+  this.httpOptions = {
+    headers: new HttpHeaders({
+      'Content-Type': 'application/json',
+      'token': localStorage.getItem("currentUser")
+    })
+  };
+  var isDrawn;
+  this.http.get < any > ("http://localhost:3000/ifdrawn", this.httpOptions).subscribe(({
+    data
+  }) => {
+    isDrawn = data[0].isDrawn;
+    console.log(isDrawn);
+    if(isDrawn==1){
 
-     console.log("hahaasdasd");
-    this.http.get < any > ("http://localhost:3000/nextround", this.httpOptions).subscribe(({
-      data
-    }) => {
+   console.log("hahaasdasd");
+  this.http.get < any > ("http://localhost:3000/nextround", this.httpOptions).subscribe(({
+    data
+  }) => {
 console.log(data);
 var matchups = [];
-        let count = data.length;
-        let pair=0;
-        let a;
-         console.log(count);
-         
-    
-         
+      let count = data.length;
+      let pair=0;
+      let a;
+       console.log(count);
+       
+  
+       
+        
+        for (let i = 0; i < count; i++) {
           
-          for (let i = 0; i < count; i++) {
-            
-             
-            for(a=i+1;a<count;a++){ 
            
-              if(data[i].position==data[a].position && data[i].rezultat!="" && data[a].rezultat!=""){
-     
-                     matchups.push([data[i].rezultat, data[a].rezultat, parseInt(data[i].round)+1, "", 1,data[i].position,0]);
-                     pair++;
-                    break;
-              
-            }
-            }
+          for(a=i+1;a<count;a++){ 
+         
+            if(data[i].position==data[a].position &&data[i].round==data[a].round && data[i].rezultat!="" && data[a].rezultat!=""){
+   
+                   matchups.push([data[i].rezultat, data[a].rezultat, parseInt(data[i].round)+1, "", 1,data[i].position,0]);
+                   pair++;
+                  break;
             
-            
-
-
-
-             // console.log(data[i].rezultat + " VS " + (data[i+1].rezultat));
-            
-           
-              /* matchups.push({
-                 home: data[i].ime, 
-                  away:  data[random].ime,
-                  round:1,
-                  rezultat:"",
-                  turnir:1,
-                  position:i
-                  
-                  
-                  
-              });*/
-          } 
-          if(pair){
-             this.http.post("http://localhost:3000/matchups", matchups)
-            .subscribe(
-              (val) => {
-                console.log("POST call successful value returned in body",
-                  val);
-              },
-              response => {
-                console.log("POST call in error", response);
-              },
-              () => {
-                console.log("The POST observable is now completed.");
-              });
-            }
-              
-  console.log(matchups);
+          }
+          }
           
-    });
-  }
+          
+
+
+
+           // console.log(data[i].rezultat + " VS " + (data[i+1].rezultat));
+          
+         
+            /* matchups.push({
+               home: data[i].ime, 
+                away:  data[random].ime,
+                round:1,
+                rezultat:"",
+                turnir:1,
+                position:i
+                
+                
+                
+            });*/
+        } 
+        if(pair){
+           this.http.post("http://localhost:3000/matchups", matchups)
+          .subscribe(
+            (val) => {
+              console.log("POST call successful value returned in body",
+                val);
+            },
+            response => {
+              console.log("POST call in error", response);
+            },
+            () => {
+              console.log("The POST observable is now completed.");
+            });
+          }
+            
+console.log(matchups);
+        
+  });
 }
-)};
+}
+)
+}
 
 }

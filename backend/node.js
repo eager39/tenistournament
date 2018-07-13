@@ -50,6 +50,30 @@ app.get('/igralci', function(req, res) {
     });
   }
 });
+app.get('/getmatches', function(req, res) {
+
+  var token = req.headers['token'];
+
+  if (token) {
+    // verifies secret and checks exp
+    jwt.verify(token, "asd", function(err, decoded) {
+      if (err) {
+        console.log(err);
+      } else {
+        // if everything is good, save to request for use in other routes
+        req.decoded = decoded;
+        console.log(decoded);
+        connection.query('SELECT *,(select ime FROM igralec WHERE id_igralec=home) as home_ime,(select ime FROM igralec WHERE id_igralec=away) as away_ime FROM matchup INNER JOIN turnir on matchup.turnir=turnir.id_turnir WHERE rezultat="" ', function(err, results) {
+          if (err) throw err
+          var data = results;
+          res.send({
+            data: data
+          });
+        });
+      }
+    });
+  }
+});
 
 app.get('/ifdrawn', function(req, res) {
 
@@ -60,6 +84,7 @@ app.get('/ifdrawn', function(req, res) {
     jwt.verify(token, "asd", function(err, decoded) {
       if (err) {
         console.log(err);
+        
       } else {
         // if everything is good, save to request for use in other routes
         req.decoded = decoded;
@@ -165,7 +190,7 @@ app.post('/matchups', function(request, response) {
  
   var sql1="INSERT INTO matchup (home,away,round,rezultat,turnir,position,advanced) VALUES ?";
   var sql2="UPDATE turnir set isDrawn=1 WHERE id_turnir=1";
-  var sql3="UPDATE matchup set advanced=1 WHERE rezultat in (SELECT * FROM(SELECT home FROM matchup where round>1 )asd) or rezultat in (SELECT * FROM(SELECT away FROM matchup where round>1 )asd) "
+  var sql3="UPDATE matchup set advanced=1 WHERE rezultat in (SELECT * FROM(SELECT home FROM matchup where round>1 and rezultat='' )asd) or rezultat in (SELECT * FROM(SELECT away FROM matchup where round>1 and rezultat='' )asd) "
   connection.query(sql1,[request.body], function(err, result) {
     if(err) throw err
     connection.query(sql2, function(err, result) {
@@ -175,6 +200,21 @@ app.post('/matchups', function(request, response) {
   connection.query(sql3, function(err, result) {
     if(err) throw err
   });
+
+});
+app.post('/update', function(request, response) {
+  console.log(request.body.arr);
+ 
+ for(var i=0;i<request.body.arr.length;i++){
+  console.log(request.body.arr[i]);
+   var sql="UPDATE matchup set rezultat= ? WHERE home=? or away=? ";
+  connection.query(sql,[request.body.arr[i],request.body.arr[i],request.body.arr[i]], function(err, result) {
+    if(err) throw err
+   
+  });
+  
+ }
+  
 
 });
 
