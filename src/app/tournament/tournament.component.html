@@ -1,0 +1,31 @@
+
+
+<div *ngIf="route.children.length === 0">
+
+<form   [formGroup]="tournament" (ngSubmit)="createTournament()"  >
+  
+  <div>
+    <label>name:
+      <input  type="text" required  formControlName="datum" >
+    </label>
+    <label>Kraj:
+      <input   type="text" required  formControlName="kraj" >
+    </label>
+	</div>
+<p>Form value: {{ tournament.value | json }}</p>
+ <button (click)="createTournament()" class="btn btn-primary" >Novi turnir</button>
+	
+</form>
+ </div>	
+
+ <div *ngIf="route.children.length === 1">
+
+  
+
+
+
+
+
+{{Matchups|json}}
+</div>
+<router-outlet></router-outlet>

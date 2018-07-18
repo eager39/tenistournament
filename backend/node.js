@@ -23,12 +23,29 @@ app.use(bodyParser.urlencoded({
 }));
 app.use(bodyParser.json());
 
+var valid=false;
 
+function checkToken(req,res){
+  var token = req.headers['token'];
+  
+  if (token) {
+    // verifies secret and checks exp
+    jwt.verify(token, "asd", function(err, decoded) {
+      if (err) {
+        console.log(err);
+      } else {
+     
+    valid=true;
+      }
+    });
+  }
+}
 
 
 app.get('/igralci', function(req, res) {
-
-  var token = req.headers['token'];
+  checkToken(req,res);
+  console.log("asd"+valid);
+  
 
   if (token) {
     // verifies secret and checks exp
@@ -78,17 +95,13 @@ app.get('/getmatches', function(req, res) {
 app.get('/ifdrawn', function(req, res) {
 
   var token = req.headers['token'];
-
-  if (token) {
+checkToken(req,res);
+  if (valid) {
     // verifies secret and checks exp
-    jwt.verify(token, "asd", function(err, decoded) {
-      if (err) {
-        console.log(err);
-        
-      } else {
+
+    
         // if everything is good, save to request for use in other routes
-        req.decoded = decoded;
-        console.log(decoded);
+     
         connection.query('SELECT isDrawn FROM turnir WHERE id_turnir=1', function(err, results) {
           if (err) throw err
           var data = results;
@@ -97,8 +110,8 @@ app.get('/ifdrawn', function(req, res) {
           });
           console.log(data);
         });
-      }
-    });
+      
+  
   }
 });
 app.get('/nextround', function (req, res) {
@@ -237,6 +250,22 @@ app.post('/api/users', function(request, response) {
   });
 });
 
+app.post('/createTour', function(req, res) {
+  console.log(req.body.user);
+ 
+checkToken(req,res);
+  if(valid){
+    console.log("valid");
+    var sql="INSERT INTO turnir (datum,user,kraj,isDrawn) VALUES (?,?,?,0)";
+    connection.query(sql,[req.body.datum,req.body.user,req.body.kraj], function(err, result) {
+      if(err) throw err
+
+    });
+  }
+});
+
+
+
 app.post('/api/auth', function(request, response) {
   var email = request.body.email;
   var password = request.body.password;
@@ -252,8 +281,7 @@ app.post('/api/auth', function(request, response) {
       });
     } else {
       const JWTToken = jwt.sign({
-          email: email,
-          _id: results.id_user
+          user: results[0].id_user
         },
         'asd', {
           expiresIn: 144000

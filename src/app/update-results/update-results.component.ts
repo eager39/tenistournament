@@ -20,7 +20,25 @@ export class UpdateResultsComponent implements OnInit {
    arr = new FormArray([]);
   httpOptions ={};
   
-  matchups = [];
+ matchups = [];
+
+getMatches(){
+  
+  this.http.get < any > ("http://localhost:3000/getmatches", this.httpOptions).subscribe(({
+    data
+  }) => {
+   
+    console.log(data);
+   this.matchups=data;
+   this.matchupform=new FormGroup({ 'arr': this.arr });
+   
+   for(var i=0; i < this.matchups.length; i++){
+     this.arr.push(new FormControl("", [Validators.required]));
+   } 
+
+  });
+ 
+}
 
   ngOnInit() {
     this.httpOptions = {
@@ -29,20 +47,7 @@ export class UpdateResultsComponent implements OnInit {
         'token': localStorage.getItem("currentUser")
       })
     };
-    this.http.get < any > ("http://localhost:3000/getmatches", this.httpOptions).subscribe(({
-      data
-    }) => {
-     
-      console.log(data);
-     this.matchups=data;
-     this.matchupform=new FormGroup({ 'arr': this.arr });
-     
-     for(var i=0; i < this.matchups.length; i++){
-       this.arr.push(new FormControl("", [Validators.required]));
-     } 
- 
-    });
-   
+  this.getMatches();
 
   }
   onSubmit() {
@@ -52,6 +57,7 @@ export class UpdateResultsComponent implements OnInit {
    this.http.post("http://localhost:3000/update",this.matchupform.value)
     .subscribe(
         (val) => {
+         
             console.log("POST call successful value returned in body", 
                         val);
         },
@@ -62,7 +68,7 @@ export class UpdateResultsComponent implements OnInit {
             console.log("The POST observable is now completed.");
         });
 		 
-    
+     this.getMatches();
           
     
    

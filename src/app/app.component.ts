@@ -7,7 +7,16 @@ import { FormBuilder, FormGroup, Validators,FormControl } from '@angular/forms';
   styleUrls: ['./app.component.css']
 })
 export class AppComponent {
-  title = 'My first angular apps';
+  title = 'tenis';
   
-  
+  logout(){
+    localStorage.removeItem('currentUser');
+  }
+  isLoggedIn(){
+    if(localStorage.getItem("currentUser")){
+      return true;
+    }else{
+      return false;
+    }
+  }
 }

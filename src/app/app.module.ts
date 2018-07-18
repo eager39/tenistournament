@@ -2,7 +2,6 @@ import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
 import { FormsModule,ReactiveFormsModule } from '@angular/forms';
 import { AppComponent } from './app.component';
-import { MatchupsComponent } from './matchups/matchups.component';
 import { HttpClientModule } from '@angular/common/http';
 import { AppRoutingModule } from './/app-routing.module';
 import { LoginComponent } from './login/login.component';
@@ -10,17 +9,20 @@ import { RegisterComponent } from './register/register.component';
 import { AuthGuard } from './authguard.service';
 import { HomeComponent } from './home/home.component';
 import { UpdateResultsComponent } from './update-results/update-results.component';
+import { DetailsComponent } from './tournament/details.component';
+import { tournamentComponent } from './tournament/tournament.component';
 
 
 
 @NgModule({
   declarations: [
     AppComponent,
-    MatchupsComponent,
+    tournamentComponent,
     LoginComponent,
     RegisterComponent,
     HomeComponent,
-    UpdateResultsComponent
+    UpdateResultsComponent,
+    DetailsComponent
   ],
   imports: [
     BrowserModule,

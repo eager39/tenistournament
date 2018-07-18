@@ -1,7 +1,5 @@
-
-
 <form  [formGroup]="igralec" (ngSubmit)="onSubmit()"  >
-  
+  <h1>Dodaj igralce</h1>
   <div>
     <label>name:
       <input  name="ime" required  formControlName="ime" >
@@ -10,12 +8,11 @@
 
 	
 	
-	<p>Form value: {{ igralec.value | json }}</p>{{todo}}
+	<p>Form value: {{ igralec.value | json }}</p>
 
   
   <button type="submit" [disabled]="igralec.invalid" class="btn btn-primary" >Submit</button>
 </form>
 
-<button (click)="generateDraw()" class="btn btn-primary" >GenerateDraw</button>
-
 <button ><a class="nav-item nav-link " routerLink="/update">Matchups</a></button>
+<router-outlet></router-outlet>
