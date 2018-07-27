@@ -22,7 +22,7 @@ app.use(bodyParser.urlencoded({
   extended: false
 }));
 app.use(bodyParser.json());
-
+var user;
 var valid=false;
 
 function checkToken(req,res){
@@ -34,7 +34,9 @@ function checkToken(req,res){
       if (err) {
         console.log(err);
       } else {
+    decoded= jwt.decode(token);
      
+        user=decoded.user;
     valid=true;
       }
     });
@@ -44,18 +46,16 @@ function checkToken(req,res){
 
 app.get('/igralci', function(req, res) {
   checkToken(req,res);
-  console.log("asd"+valid);
+  
   
 
-  if (token) {
+  if (valid) {
     // verifies secret and checks exp
-    jwt.verify(token, "asd", function(err, decoded) {
-      if (err) {
-        console.log(err);
-      } else {
+   
+       
+     
         // if everything is good, save to request for use in other routes
-        req.decoded = decoded;
-        console.log(decoded);
+      
         connection.query('SELECT ime,id_igralec FROM igralec ORDER BY rand()', function(err, results) {
           if (err) throw err
           var data = results;
@@ -63,9 +63,9 @@ app.get('/igralci', function(req, res) {
             data: data
           });
         });
+      
       }
-    });
-  }
+  
 });
 app.get('/getmatches', function(req, res) {
 
@@ -97,13 +97,15 @@ app.get('/ifdrawn', function(req, res) {
   var token = req.headers['token'];
 checkToken(req,res);
   if (valid) {
+    
     // verifies secret and checks exp
 
     
         // if everything is good, save to request for use in other routes
      
-        connection.query('SELECT isDrawn FROM turnir WHERE id_turnir=1', function(err, results) {
+        connection.query('SELECT isDrawn FROM turnir WHERE id_turnir="'+req.query.id+'"', function(err, results) {
           if (err) throw err
+          console.log(results);
           var data = results;
           res.send({
             data: data
@@ -114,24 +116,39 @@ checkToken(req,res);
   
   }
 });
+app.get('/getTours', function(req, res) {
+
+
+checkToken(req,res);
+console.log(user);
+  if (valid) {
+    // verifies secret and checks exp
+
+    
+        // if everything is good, save to request for use in other routes
+     
+        connection.query('SELECT * FROM turnir WHERE user="'+user+'" ', function(err, results) {
+          if (err) throw err
+          var data = results;
+          res.send({
+            data: data
+          });
+       
+        });
+      
+  
+  }
+});
 app.get('/nextround', function (req, res) {
 
 
 
-  var token = req.headers['token'];
+  checkToken(req,res);
 
-  if (token) {
-    var ostalo=0;
-    var check=0;
-    // verifies secret and checks exp
-    jwt.verify(token, "asd", function (err, decoded) {
-      if (err) {
-        console.log(err);
-      } else {
-        // if everything is good, save to request for use in other routes
-        req.decoded = decoded;
-        console.log(decoded);
-        var sql="SELECT round,rezultat,turnir,floor(position/2) as position,away,home FROM matchup WHERE (advanced=0) or away=null or home=null ";
+  if (valid) {
+       
+        console.log("nextround"+req.query.id);
+        var sql="SELECT round,rezultat,turnir,floor(position/2) as position,away,home FROM matchup WHERE (advanced=0 and turnir='"+req.query.id+"') or away=null or home=null ";
         connection.query(sql, function(err, result) {
           if(err) throw err
           res.write(JSON.stringify({
@@ -139,52 +156,9 @@ app.get('/nextround', function (req, res) {
           }));
           res.end();
         });
-        /*
-        connection.query("SELECT count(advanced) as ostalo FROM matchup WHERE  round=(select min(round) FROM matchup WHERE turnir=1 advanced!=1) group by floor(position/2) ", function (err, results) {
-        
-          console.log("LOL" + ostalo);
-          
-            connection.query('SELECT round,rezultat,floor(position/2) as position FROM matchup WHERE turnir=1 and rezultat!="" and round=(select min(round) from matchup where turnir=1 and advanced!=1) and advanced!=1', function (err, results) {
-              if (err) console.log(err);
-            
+      
+  
 
-              var data = results;
-              console.log(data.length);
-              if (parseInt(data.length)>1) {
-                res.write(JSON.stringify({
-                  data: data
-                }));
-                res.end();
-              } else {
-                check = 1;
-                console.log("FUCKYOU");
-              }
-              console.log("CHECK" + check);
-            });
-           
-          });
-        if(false){
-          console.log("why");
-            connection.query('SELECT round,rezultat,floor(position/2) as position FROM matchup WHERE turnir=1 and rezultat!="" and round=2 and advanced!=1 ', function (err, results) {
-              if (err) throw err;
-
-              console.log(err);
-              console.log("haha");
-              var data = results;
-              console.log("asdasd"+data);
-              res.write(JSON.stringify({
-                data: data
-              }));
-              res.end();
-            });
-          }
-       
-
-      }
-    });
-    */
-  }
-});
 
 };
 });
@@ -202,8 +176,8 @@ app.post('/matchups', function(request, response) {
   response.json();  console.log(request.body.length);
  
   var sql1="INSERT INTO matchup (home,away,round,rezultat,turnir,position,advanced) VALUES ?";
-  var sql2="UPDATE turnir set isDrawn=1 WHERE id_turnir=1";
-  var sql3="UPDATE matchup set advanced=1 WHERE rezultat in (SELECT * FROM(SELECT home FROM matchup where round>1 and rezultat='' )asd) or rezultat in (SELECT * FROM(SELECT away FROM matchup where round>1 and rezultat='' )asd) "
+  var sql2="UPDATE turnir set isDrawn=1 WHERE id_turnir='"+request.body[0][4]+"'";
+  var sql3="UPDATE matchup set advanced=1 WHERE turnir='"+request.body[0][4]+"' and rezultat in (SELECT * FROM(SELECT home FROM matchup where round>1 and rezultat='' )asd) or rezultat in (SELECT * FROM(SELECT away FROM matchup where round>1 and rezultat='' )asd) "
   connection.query(sql1,[request.body], function(err, result) {
     if(err) throw err
     connection.query(sql2, function(err, result) {

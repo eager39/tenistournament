@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { HttpClient,HttpHeaders } from '@angular/common/http';
+import { HttpClient,HttpHeaders,HttpParams } from '@angular/common/http';
 
 @Component({
   selector: 'app-details',
@@ -9,7 +9,7 @@ import { HttpClient,HttpHeaders } from '@angular/common/http';
 })
 export class DetailsComponent implements OnInit {
 
-  id: number;
+  id: any;
   private sub: any;
   httpOptions ={};
 
@@ -20,14 +20,15 @@ export class DetailsComponent implements OnInit {
       this.id = +params['id']; // (+) converts string 'id' to a number
       console.log(this.id);
   });
+  this.nextRound();
 }
   generateDraw() {
    
     var isDrawn;
-    this.http.get < any > ("http://localhost:3000/ifdrawn", this.httpOptions).subscribe(({
+    this.http.get < any > ("http://localhost:3000/ifdrawn", { headers:this.httpOptions,params:new HttpParams().set('id', this.id)}).subscribe(({
       data
     }) => {
-      console.log("haha");
+     
       isDrawn = data[0].isDrawn;
       console.log(isDrawn);
       if (isDrawn!=1) {
@@ -40,6 +41,9 @@ export class DetailsComponent implements OnInit {
           var count = data.length;
           var numrounds = Math.ceil((Math.log2(12)));
           console.log(numrounds);
+        add= Math.pow(2, Math.ceil(Math.log(count)/Math.log(2)))-count;
+        console.log(add);
+          /*
           if(count<8){
             console.log("Premalo igralcev");
             return false;
@@ -54,16 +58,17 @@ export class DetailsComponent implements OnInit {
           }
           if(count!= 16){
              add=32-count;
-            for(var i=0;i<add;i++){
-              console.log(i);
-            data.push({
-              ime: "bye",
-              id_igralec:"bye"
-            });
-            count++;
-         
-            }  
-          }
+          
+          }*/
+          for(var i=0;i<add;i++){
+           
+          data.push({
+            ime: "bye",
+            id_igralec:"bye"
+          });
+        
+       
+          }  
           console.log(data);
           count = Math.floor(data.length/2);
           console.log(count);
@@ -81,7 +86,7 @@ export class DetailsComponent implements OnInit {
               used.push(random);
               console.log(data[i].ime + " VS " + (data[random].ime));
   
-              matchups.push([data[i].id_igralec, data[random].id_igralec, 1, "",1, i,0]);
+              matchups.push([data[i].id_igralec, data[random].id_igralec, 1, "",this.id, i,0]);
               if(matchups[i][0]=="bye"){
                 matchups[i][3]=matchups[i][1];
               }
@@ -124,7 +129,7 @@ export class DetailsComponent implements OnInit {
       }
     });
     this.nextRound();
-  
+   
   }
 nextRound(){
     this.httpOptions = {
@@ -133,18 +138,21 @@ nextRound(){
         'token': localStorage.getItem("currentUser")
       })
     };
+   
     var isDrawn;
-    this.http.get < any > ("http://localhost:3000/ifdrawn", this.httpOptions).subscribe(({
+    this.http.get < any > ("http://localhost:3000/ifdrawn",{ headers:this.httpOptions,params:new HttpParams().set('id', this.id)}).subscribe(({
       data
     }) => {
+      console.log(data);
       isDrawn = data[0].isDrawn;
       console.log(isDrawn);
       if(isDrawn==1){
   
      console.log("hahaasdasd");
-    this.http.get < any > ("http://localhost:3000/nextround", this.httpOptions).subscribe(({
+    this.http.get < any > ("http://localhost:3000/nextround", { headers:this.httpOptions,params:new HttpParams().set('id', this.id)}).subscribe(({
       data
     }) => {
+      console.log("haha");
   console.log(data);
   var matchups = [];
         let count = data.length;
@@ -162,7 +170,7 @@ nextRound(){
            
               if(data[i].position==data[a].position &&data[i].round==data[a].round && data[i].rezultat!="" && data[a].rezultat!=""){
      
-                     matchups.push([data[i].rezultat, data[a].rezultat, parseInt(data[i].round)+1, "", 1,data[i].position,0]);
+                     matchups.push([data[i].rezultat, data[a].rezultat, parseInt(data[i].round)+1, "", this.id,data[i].position,0]);
                      pair++;
                     break;
               

@@ -5,27 +5,24 @@
 <form   [formGroup]="tournament" (ngSubmit)="createTournament()"  >
   
   <div>
-    <label>name:
-      <input  type="text" required  formControlName="datum" >
+    <label>datum:
+      <input  type="datetime-local" required  formControlName="datum" >
     </label>
     <label>Kraj:
       <input   type="text" required  formControlName="kraj" >
     </label>
 	</div>
 <p>Form value: {{ tournament.value | json }}</p>
- <button (click)="createTournament()" class="btn btn-primary" >Novi turnir</button>
+ <button  class="btn btn-primary" >Novi turnir</button>
 	
 </form>
+<ul>
+  <li *ngFor="let hero of turnir ">
+  <a [routerLink]="[hero.id_turnir]">{{ hero.kraj }}</a>  
+  </li>
+</ul>
  </div>	
-
- <div *ngIf="route.children.length === 1">
-
-  
+ 
 
 
-
-
-
-{{Matchups|json}}
-</div>
 <router-outlet></router-outlet>

@@ -24,6 +24,7 @@ export class tournamentComponent implements OnInit {
   
     
   }; // better :D 
+turnir;
   httpOptions ={};
   id: number;
   private sub: any;
@@ -101,12 +102,21 @@ onSubmit() {
 
   
 }
+getTours(){
+  this.http.get < any > ("http://localhost:3000/getTours", this.httpOptions).subscribe(({
+    data
+  }) => {
+ this.turnir=data;
+    
+  });
+}
   
 
   ngOnInit() {
     this.sub = this.route.url.subscribe(params => {
       this.id = +params['id']; // (+) converts string 'id' to a number
       console.log(params);
+      this.getTours();
   });
    
 
