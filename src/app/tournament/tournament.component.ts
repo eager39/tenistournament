@@ -31,11 +31,7 @@ turnir;
   helper = new JwtHelperService();
   decodedToken = this.helper.decodeToken(localStorage.getItem("currentUser"));
  
- igralec = new FormGroup ({
-    ime: new FormControl()
-
-
-  });
+ 
   tournament = new FormGroup ({
    datum: new FormControl(),
    kraj: new FormControl(),
@@ -53,6 +49,7 @@ turnir;
       this.http.post("http://localhost:3000/createTour",this.tournament.value,this.httpOptions)
         .subscribe(
             (val) => {
+              this.getTours();
                 console.log("POST call successful value returned in body", 
                             val);
             },
@@ -68,40 +65,12 @@ turnir;
      
         
       
-      this.igralec.reset();
+      this.tournament.reset();
        
       }
   }
   
-onSubmit() {
-  if(this.igralec.valid){
-  console.log(this.igralec.value);
-  
-  this.http.post("http://localhost:3000/test",this.igralec.value)
-    .subscribe(
-        (val) => {
-            console.log("POST call successful value returned in body", 
-                        val);
-        },
-        response => {
-            console.log("POST call in error", response);
-        },
-        () => {
-            console.log("The POST observable is now completed.");
-        });
-		 
-        
-  
- 
-		
-  
-  this.igralec.reset();
-   
-	}
-	
 
-  
-}
 getTours(){
   this.http.get < any > ("http://localhost:3000/getTours", this.httpOptions).subscribe(({
     data

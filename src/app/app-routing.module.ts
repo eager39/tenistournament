@@ -6,14 +6,13 @@ import { LoginComponent } from './login/login.component';
 import { RegisterComponent } from './register/register.component';
 import { AuthGuard } from './authguard.service';
 import { HomeComponent } from './home/home.component';
-import { UpdateResultsComponent } from './update-results/update-results.component';
+import { UpdateComponent } from './tournament/update.component';
 
 const routes: Routes = [
   { path: 'tournament', component: tournamentComponent, canActivate: [AuthGuard],
   children: [
-    {path: ':id', component:DetailsComponent,canActivate: [AuthGuard],
- 
-  }, 
+    {path: ':id', component:DetailsComponent,canActivate: [AuthGuard],},
+    {path:":id/update",component:UpdateComponent} 
     
   ]
   
@@ -21,7 +20,6 @@ const routes: Routes = [
   {path:'login', component:LoginComponent},
   {path:'register', component:RegisterComponent},
   {path:"home",component: HomeComponent},
-  {path:"update",component:UpdateResultsComponent},
   {path:"**",component: HomeComponent}
   
 ];

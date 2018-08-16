@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
+import { DataService } from '../data-service.service';
 
 @Component({
   selector: 'app-login',
@@ -18,11 +18,9 @@ export class LoginComponent implements OnInit {
     private formBuilder: FormBuilder,
     private route: ActivatedRoute,
     private router: Router,
-    private http: HttpClient
+    private _dataService: DataService
   ) { }
-authenticationService(user){
-  return this.http.post<any>('http://localhost:3000/api/auth', user);
-} 
+
 get f() { return this.loginForm.controls; }
     onSubmit() {
       this.submitted = true;
@@ -34,7 +32,7 @@ get f() { return this.loginForm.controls; }
       
  
       this.loading = true;
-      this.authenticationService(this.loginForm.value)
+      this._dataService.add(this.loginForm.value,"auth")
           .subscribe(
               data => {
                 if(data.status=="false"){

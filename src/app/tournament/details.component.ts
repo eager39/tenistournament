@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { FormBuilder, FormGroup, Validators,FormControl } from '@angular/forms';
 import { HttpClient,HttpHeaders,HttpParams } from '@angular/common/http';
+import { DataService } from '../data-service.service';
 
 @Component({
   selector: 'app-details',
@@ -12,8 +14,16 @@ export class DetailsComponent implements OnInit {
   id: any;
   private sub: any;
   httpOptions ={};
+  podatkiIgralca=[];
+  igralec = new FormGroup ({
+    ime: new FormControl()
 
-  constructor(private http: HttpClient,private route: ActivatedRoute) { }
+
+  });
+
+  
+
+  constructor(private http: HttpClient,private route: ActivatedRoute, private _dataService: DataService) { }
 
   ngOnInit() {
     this.sub = this.route.params.subscribe(params => {
@@ -25,21 +35,21 @@ export class DetailsComponent implements OnInit {
   generateDraw() {
    
     var isDrawn;
-    this.http.get < any > ("http://localhost:3000/ifdrawn", { headers:this.httpOptions,params:new HttpParams().set('id', this.id)}).subscribe(({
-      data
-    }) => {
-     
-      isDrawn = data[0].isDrawn;
+    this._dataService.getAll({ headers:this.httpOptions,params:new HttpParams().set('id', this.id)},"ifdrawn").subscribe((
+      data:any
+    ) => {
+      isDrawn = data.data[0].isDrawn;
       console.log(isDrawn);
       if (isDrawn!=1) {
         var matchups = [];
         var used = new Array();
-        this.http.get < any > ("http://localhost:3000/igralci", this.httpOptions).subscribe(({
-          data
-        }) => {
+        this._dataService.getAll({ headers:this.httpOptions,params:new HttpParams().set('id', this.id)},"igralci").subscribe((
+          data:any
+        ) => {
+          console.log(data);
           var add=0;
           var count = data.length;
-          var numrounds = Math.ceil((Math.log2(12)));
+          var numrounds = Math.ceil((Math.log2(count)));
           console.log(numrounds);
         add= Math.pow(2, Math.ceil(Math.log(count)/Math.log(2)))-count;
         console.log(add);
@@ -109,9 +119,13 @@ export class DetailsComponent implements OnInit {
             }
   
           }
+          let matchups_rounds={};
+          matchups_rounds["matchups"]=matchups;
+          matchups_rounds["rounds"]=numrounds;
+          console.log(matchups_rounds);
           //console.log(a);
           console.log(matchups);
-          this.http.post("http://localhost:3000/matchups", matchups)
+          this.http.post("http://localhost:3000/matchups", matchups_rounds)
             .subscribe(
               (val) => {
                 console.log("POST call successful value returned in body",
@@ -130,6 +144,35 @@ export class DetailsComponent implements OnInit {
     });
     this.nextRound();
    
+  }
+  dodajIgralca(){
+    
+    if(this.igralec.valid){
+      this.podatkiIgralca=[];
+    this.podatkiIgralca.push({"ime":this.igralec.value.ime,"turnir":this.id})
+    console.log(this.podatkiIgralca);
+      
+      this.http.post("http://localhost:3000/addPlayer",this.podatkiIgralca,this.httpOptions)
+        .subscribe(
+            (val) => {
+                console.log("POST call successful value returned in body", 
+                            val);
+            },
+            response => {
+                console.log("POST call in error", response);
+            },
+            () => {
+                console.log("The POST observable is now completed.");
+            });
+         
+            
+      
+     
+        
+      
+      this.igralec.reset();
+       
+      }
   }
 nextRound(){
     this.httpOptions = {
@@ -160,8 +203,11 @@ nextRound(){
         let a;
          console.log(count);
          
-    
-         
+      console.log(data[0]);
+         if(data[0].tretje_mesto){
+          matchups.push([data[0].tretje_mesto, data[1].tretje_mesto, 66, "",this.id, 0,0]);
+          pair++;
+         }else{
           
           for (let i = 0; i < count; i++) {
             
@@ -196,8 +242,10 @@ nextRound(){
                   
               });*/
           } 
+        }
+          
           if(pair){
-             this.http.post("http://localhost:3000/matchups", matchups)
+             this.http.post("http://localhost:3000/nextroundMatches", matchups)
             .subscribe(
               (val) => {
                 console.log("POST call successful value returned in body",

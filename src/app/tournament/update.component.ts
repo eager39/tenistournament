@@ -1,16 +1,19 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators,FormControl,FormArray } from '@angular/forms';
-import { HttpClient,HttpHeaders } from '@angular/common/http';
+import { HttpClient,HttpHeaders,HttpParams } from '@angular/common/http';
 import { asTextData } from '@angular/core/src/view';
+import { ActivatedRoute } from '@angular/router';
+import { nextTick } from 'q';
+import { ResourceLoader } from '@angular/compiler';
 
 @Component({
-  selector: 'app-update-results',
-  templateUrl: './update-results.component.html',
-  styleUrls: ['./update-results.component.css']
+  selector: 'app-update',
+  templateUrl: './update.component.html',
+  styleUrls: ['./update.component.css']
 })
-export class UpdateResultsComponent implements OnInit {
+export class UpdateComponent implements OnInit {
 
-  constructor(private http: HttpClient) {
+  constructor(private http: HttpClient,private route: ActivatedRoute) {
     
 
     
@@ -19,12 +22,13 @@ export class UpdateResultsComponent implements OnInit {
    matchupform:FormGroup;
    arr = new FormArray([]);
   httpOptions ={};
-  
+  private sub: any;
+  id: any;
  matchups = [];
 
 getMatches(){
   
-  this.http.get < any > ("http://localhost:3000/getmatches", this.httpOptions).subscribe(({
+  this.http.get < any > ("http://localhost:3000/getmatches", { headers:this.httpOptions,params:new HttpParams().set('id', this.id)}).subscribe(({
     data
   }) => {
    
@@ -35,12 +39,16 @@ getMatches(){
    for(var i=0; i < this.matchups.length; i++){
      this.arr.push(new FormControl("", [Validators.required]));
    } 
-
+   
   });
  
 }
 
   ngOnInit() {
+    this.sub = this.route.params.subscribe(params => {
+      this.id = +params['id']; // (+) converts string 'id' to a number
+      console.log(this.id);
+  });
     this.httpOptions = {
       headers: new HttpHeaders({
         'Content-Type': 'application/json',
@@ -57,9 +65,10 @@ getMatches(){
    this.http.post("http://localhost:3000/update",this.matchupform.value)
     .subscribe(
         (val) => {
-         
+        
             console.log("POST call successful value returned in body", 
                         val);
+                      this.getMatches(); 
         },
         response => {
             console.log("POST call in error", response);
@@ -68,8 +77,9 @@ getMatches(){
             console.log("The POST observable is now completed.");
         });
 		 
-     this.getMatches();
+     
           
+         
     
    
       

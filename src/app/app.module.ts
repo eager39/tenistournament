@@ -8,9 +8,13 @@ import { LoginComponent } from './login/login.component';
 import { RegisterComponent } from './register/register.component';
 import { AuthGuard } from './authguard.service';
 import { HomeComponent } from './home/home.component';
-import { UpdateResultsComponent } from './update-results/update-results.component';
 import { DetailsComponent } from './tournament/details.component';
 import { tournamentComponent } from './tournament/tournament.component';
+import { UpdateComponent } from './tournament/update.component';
+import { DataService } from './data-service.service';
+import {Configuration} from './app.settings';
+
+
 
 
 
@@ -21,8 +25,10 @@ import { tournamentComponent } from './tournament/tournament.component';
     LoginComponent,
     RegisterComponent,
     HomeComponent,
-    UpdateResultsComponent,
-    DetailsComponent
+    DetailsComponent,
+    UpdateComponent
+    
+    
   ],
   imports: [
     BrowserModule,
@@ -32,7 +38,7 @@ import { tournamentComponent } from './tournament/tournament.component';
 	AppRoutingModule
 	
   ],
-  providers: [AuthGuard],
+  providers: [AuthGuard,DataService,Configuration],
   bootstrap: [AppComponent]
 })
 export class AppModule { }
