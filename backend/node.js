@@ -101,9 +101,7 @@ checkToken(req,res);
           if (err) throw err
           console.log(results);
           var data = results;
-          res.send({
-            data: data
-          });
+          res.send(data);
           console.log(data);
         });
       

@@ -33,8 +33,8 @@ get f() { return this.loginForm.controls; }
  
       this.loading = true;
       this._dataService.add(this.loginForm.value,"auth")
-          .subscribe(
-              data => {
+          .subscribe((
+              data:any )=> {
                 if(data.status=="false"){
                   this.loading=false;
                   console.log(data.status);

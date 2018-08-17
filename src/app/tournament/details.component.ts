@@ -13,46 +13,53 @@ export class DetailsComponent implements OnInit {
 
   id: any;
   private sub: any;
-  httpOptions ={};
+ httpOptions={};
   podatkiIgralca=[];
   igralec = new FormGroup ({
     ime: new FormControl()
 
 
   });
-
+  
   
 
-  constructor(private http: HttpClient,private route: ActivatedRoute, private _dataService: DataService) { }
+  constructor(private http: HttpClient,private route: ActivatedRoute, private _dataService: DataService) {
+    
+   }
 
   ngOnInit() {
     this.sub = this.route.params.subscribe(params => {
       this.id = +params['id']; // (+) converts string 'id' to a number
       console.log(this.id);
+
+    this.httpOptions = {
+        headers: new HttpHeaders({
+          'Content-Type': 'application/json',
+          'token': localStorage.getItem("currentUser")
+        }),
+        params: new HttpParams().set("id",this.id)
+      };
   });
   this.nextRound();
 }
   generateDraw() {
    
     var isDrawn;
-    this._dataService.getAll({ headers:this.httpOptions,params:new HttpParams().set('id', this.id)},"ifdrawn").subscribe((
+    this._dataService.getAll(this.httpOptions,"ifdrawn").subscribe((
       data:any
     ) => {
-      isDrawn = data.data[0].isDrawn;
-      console.log(isDrawn);
+      isDrawn = data[0].isDrawn;
       if (isDrawn!=1) {
         var matchups = [];
         var used = new Array();
-        this._dataService.getAll({ headers:this.httpOptions,params:new HttpParams().set('id', this.id)},"igralci").subscribe((
+        this._dataService.getAll(this.httpOptions,"igralci").subscribe((
           data:any
         ) => {
-          console.log(data);
           var add=0;
           var count = data.length;
           var numrounds = Math.ceil((Math.log2(count)));
-          console.log(numrounds);
         add= Math.pow(2, Math.ceil(Math.log(count)/Math.log(2)))-count;
-        console.log(add);
+      
           /*
           if(count<8){
             console.log("Premalo igralcev");
@@ -79,9 +86,9 @@ export class DetailsComponent implements OnInit {
         
        
           }  
-          console.log(data);
+          
           count = Math.floor(data.length/2);
-          console.log(count);
+         
          // if (count % 2 == 1 ) {
           //  data.push({
           //    ime: "FREEWIN"
@@ -122,10 +129,10 @@ export class DetailsComponent implements OnInit {
           let matchups_rounds={};
           matchups_rounds["matchups"]=matchups;
           matchups_rounds["rounds"]=numrounds;
-          console.log(matchups_rounds);
+      
           //console.log(a);
           console.log(matchups);
-          this.http.post("http://localhost:3000/matchups", matchups_rounds)
+          this._dataService.add(matchups_rounds,"matchups")
             .subscribe(
               (val) => {
                 console.log("POST call successful value returned in body",
@@ -150,9 +157,9 @@ export class DetailsComponent implements OnInit {
     if(this.igralec.valid){
       this.podatkiIgralca=[];
     this.podatkiIgralca.push({"ime":this.igralec.value.ime,"turnir":this.id})
-    console.log(this.podatkiIgralca);
+   
       
-      this.http.post("http://localhost:3000/addPlayer",this.podatkiIgralca,this.httpOptions)
+      this._dataService.add(this.podatkiIgralca,"addPlayer",this.httpOptions)
         .subscribe(
             (val) => {
                 console.log("POST call successful value returned in body", 
@@ -175,36 +182,29 @@ export class DetailsComponent implements OnInit {
       }
   }
 nextRound(){
-    this.httpOptions = {
-      headers: new HttpHeaders({
-        'Content-Type': 'application/json',
-        'token': localStorage.getItem("currentUser")
-      })
-    };
+  
    
     var isDrawn;
-    this.http.get < any > ("http://localhost:3000/ifdrawn",{ headers:this.httpOptions,params:new HttpParams().set('id', this.id)}).subscribe(({
-      data
-    }) => {
-      console.log(data);
+    this._dataService.getAll(this.httpOptions,"ifdrawn").subscribe((
+      data:any
+    ) => {
+     
       isDrawn = data[0].isDrawn;
-      console.log(isDrawn);
+   
       if(isDrawn==1){
   
-     console.log("hahaasdasd");
-    this.http.get < any > ("http://localhost:3000/nextround", { headers:this.httpOptions,params:new HttpParams().set('id', this.id)}).subscribe(({
-      data
-    }) => {
-      console.log("haha");
-  console.log(data);
+    
+    this._dataService.getAll(this.httpOptions,"nextround" ).subscribe((
+      data:any
+    ) => {
+      
+ 
   var matchups = [];
         let count = data.length;
         let pair=0;
         let a;
-         console.log(count);
-         
-      console.log(data[0]);
-         if(data[0].tretje_mesto){
+      
+         if(data.tretje_mesto){
           matchups.push([data[0].tretje_mesto, data[1].tretje_mesto, 66, "",this.id, 0,0]);
           pair++;
          }else{
@@ -245,7 +245,7 @@ nextRound(){
         }
           
           if(pair){
-             this.http.post("http://localhost:3000/nextroundMatches", matchups)
+             this._dataService.add(matchups,"nextroundMatches")
             .subscribe(
               (val) => {
                 console.log("POST call successful value returned in body",
@@ -270,3 +270,4 @@ nextRound(){
 
 
 };
+

@@ -14,8 +14,8 @@ export class DataService {
     public getAll(options,api) {
         return this.http.get(this.actionUrl+api,options);
     }
-    public add(data,api) {
-        return this.http.post<any>(this.actionUrl+api, data);
+    public add(data,api,options?) {
+        return this.http.post<any>(this.actionUrl+api, data,options);
     }
      
 /*   
