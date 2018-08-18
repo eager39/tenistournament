@@ -22,22 +22,32 @@ app.use(bodyParser.urlencoded({
   extended: false
 }));
 app.use(bodyParser.json());
-var user;
-var valid=false;
 
-function checkToken(req,res){
+function checkTokenWithPromise(req){
+  return new Promise(resolve, reject => {
+    var token = req.headers['token'];
+    if (token) {
+      jwt.verify(token, "asd", function(err, decoded) {
+        if (err) {
+          reject(err);
+        } else {
+          decoded= jwt.decode(token); 
+          resolve(decoded.user);
+        }
+      });
+    }
+  });
+}
+
+function checkTokenWithCallback(req, callback) {
   var token = req.headers['token'];
-  
   if (token) {
-    // verifies secret and checks exp
     jwt.verify(token, "asd", function(err, decoded) {
       if (err) {
-        console.log(err);
+        callback(err);
       } else {
-    decoded= jwt.decode(token);
-     
-        user=decoded.user;
-    valid=true;
+        decoded= jwt.decode(token); 
+        callback(null, decoded.user);
       }
     });
   }
@@ -45,43 +55,34 @@ function checkToken(req,res){
 
 
 app.get('/igralci', function(req, res) {
-  checkToken(req,res);
-  
-  
-
-  if (valid) {
-    // verifies secret and checks exp
-   
-       
-     
-        // if everything is good, save to request for use in other routes
-      
-        connection.query('SELECT igralec.ime,id_igralec FROM igralci_turnir INNER JOIN igralec on igralec.id_igralec=igralci_turnir.igralec WHERE turnir="'+req.query.id+'" ORDER BY rand()', function(err, results) {
-          if (err) throw err
-          var data = results;
-          res.send(data);
-        });
-      
-      }
-  
+  checkTokenWithPromise(req).then(user => {
+    // verifies secret and checks exp 
+    // if everything is good, save to request for use in other routes   
+    connection.query('SELECT igralec.ime,id_igralec FROM igralci_turnir INNER JOIN igralec on igralec.id_igralec=igralci_turnir.igralec WHERE turnir="'+req.query.id+'" ORDER BY rand()', function(err, results) {
+      if (err) throw err
+      var data = results;
+      res.send(data);
+    });
+  }, err => {
+    console.log("No such user. Error: " + err);
+  });
 });
+
+
 app.get('/getmatches', function(req, res) {
-
-checkToken(req,res);
-
-  if (valid) {
-    // verifies secret and checks exp
-     console.log("turnir: "+req.query.id);
-        // if everything is good, save to request for use in other routes
-       
-        connection.query('SELECT *,(select ime FROM igralec WHERE id_igralec=home) as home_ime,(select ime FROM igralec WHERE id_igralec=away) as away_ime FROM matchup INNER JOIN turnir on matchup.turnir=turnir.id_turnir WHERE rezultat="" and turnir="'+req.query.id+'" ', function(err, results) {
-          if (err) throw err
-          var data = results;
-          res.send(data);
-        });
-      
-   
-  }
+  checkTokenWithCallback(req, (err, user) => {
+    if(!err) {
+      console.log("turnir: "+req.query.id);
+      // if everything is good, save to request for use in other routes
+      connection.query('SELECT *,(select ime FROM igralec WHERE id_igralec=home) as home_ime,(select ime FROM igralec WHERE id_igralec=away) as away_ime FROM matchup INNER JOIN turnir on matchup.turnir=turnir.id_turnir WHERE rezultat="" and turnir="'+req.query.id+'" ', function(err, results) {
+        if (err) throw err
+        var data = results;
+        res.send(data);
+      });
+    } else {
+      console.log("No such user. Error: " + err);
+    }
+  });
 });
 
 app.get('/ifdrawn', function(req, res) {
