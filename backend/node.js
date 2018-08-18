@@ -77,9 +77,7 @@ checkToken(req,res);
         connection.query('SELECT *,(select ime FROM igralec WHERE id_igralec=home) as home_ime,(select ime FROM igralec WHERE id_igralec=away) as away_ime FROM matchup INNER JOIN turnir on matchup.turnir=turnir.id_turnir WHERE rezultat="" and turnir="'+req.query.id+'" ', function(err, results) {
           if (err) throw err
           var data = results;
-          res.send({
-            data: data
-          });
+          res.send(data);
         });
       
    
@@ -122,9 +120,7 @@ console.log(user);
         connection.query('SELECT * FROM turnir WHERE user="'+user+'" and isFinished!=1 ', function(err, results) {
           if (err) throw err
           var data = results;
-          res.send({
-            data: data
-          });
+          res.send(data);
        
         });
       
@@ -149,9 +145,7 @@ app.get('/nextround', function (req, res) {
         connection.query(sql2, function(err, result) {
           if(err) throw err
           console.log(result);
-          res.write(JSON.stringify({
-            data: result
-          }));
+          res.write(JSON.stringify(result));
           res.end();
         });
       
@@ -160,21 +154,26 @@ app.get('/nextround', function (req, res) {
         connection.query(sql2, function(err, result) {
           if(err) throw err
           
-          res.write(JSON.stringify({
-            data: result
-          }));
+          res.write(JSON.stringify(result));
           res.end();
         });
           }
         });
 
-
-       
-      
-  
-
-
 };
+});
+app.get("/getAllMatches",function(req,res){
+checkToken(req,res);
+if(valid){
+  var sql="SELECT id_matchup,round,rezultat,home as home_id,away as away_id,turnir,num_rounds,CASE WHEN A.ime IS NULL THEN 'bye' ELSE A.ime END AS away,CASE WHEN H.ime IS NULL THEN 'bye' ELSE H.ime END AS home,R.ime as rezultat_ime  FROM tenis.matchup INNER JOIN turnir on turnir.id_turnir=matchup.turnir LEFT JOIN igralec H on H.id_igralec=matchup.home LEFT JOIN igralec A on A.id_igralec=matchup.away INNER JOIN igralec R on R.id_igralec=matchup.rezultat  WHERE turnir='"+req.query.id+"'" ;
+  connection.query(sql, function(err, result) {
+    if(err) throw err
+    console.log(result);
+    res.send(result);
+  });
+
+
+}
 });
 
 

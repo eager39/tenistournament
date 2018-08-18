@@ -10,4 +10,12 @@
     {{igralec.value | json}}
     <button type="submit" class="btn btn-primary">Submit</button>
   </form>
+
+  <div  *ngIf="matchups" >
+    <ul *ngFor="let matchup of matchups">
+      <h1>Round:{{matchup.round}}</h1>
+    <li>{{matchup.home}}</li> vs <li>{{matchup.away}}</li> WINNER:{{matchup.rezultat_ime}}
+  </ul>
+  </div>
+
 <router-outlet></router-outlet>

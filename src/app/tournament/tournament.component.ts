@@ -3,6 +3,7 @@ import { FormBuilder, FormGroup, Validators,FormControl } from '@angular/forms';
 import { HttpClient,HttpHeaders } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { JwtHelperService } from '@auth0/angular-jwt';
+import { DataService } from '../data-service.service';
 
 @Component({
   selector: 'app-tournament',
@@ -12,7 +13,7 @@ import { JwtHelperService } from '@auth0/angular-jwt';
 export class tournamentComponent implements OnInit {
 
 
-  constructor(private http: HttpClient,private route: ActivatedRoute) {
+  constructor(private http: HttpClient,private route: ActivatedRoute,private _dataService: DataService) {
     
     this.httpOptions = {
       headers: new HttpHeaders({
@@ -46,7 +47,7 @@ turnir;
       });
     console.log(this.tournament.value);
       
-      this.http.post("http://localhost:3000/createTour",this.tournament.value,this.httpOptions)
+      this._dataService.add(this.tournament.value,"createTour",this.httpOptions)
         .subscribe(
             (val) => {
               this.getTours();
@@ -72,19 +73,19 @@ turnir;
   
 
 getTours(){
-  this.http.get < any > ("http://localhost:3000/getTours", this.httpOptions).subscribe(({
-    data
-  }) => {
+  this._dataService.getAll(this.httpOptions,"getTours").subscribe((
+    data:any
+  ) => {
  this.turnir=data;
-    
+    console.log(this.turnir);
   });
 }
+
   
 
   ngOnInit() {
     this.sub = this.route.url.subscribe(params => {
       this.id = +params['id']; // (+) converts string 'id' to a number
-      console.log(params);
       this.getTours();
   });
    

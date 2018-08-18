@@ -5,6 +5,7 @@ import { asTextData } from '@angular/core/src/view';
 import { ActivatedRoute } from '@angular/router';
 import { nextTick } from 'q';
 import { ResourceLoader } from '@angular/compiler';
+import {DataService} from '../data-service.service';
 
 @Component({
   selector: 'app-update',
@@ -13,7 +14,7 @@ import { ResourceLoader } from '@angular/compiler';
 })
 export class UpdateComponent implements OnInit {
 
-  constructor(private http: HttpClient,private route: ActivatedRoute) {
+  constructor(private http: HttpClient,private route: ActivatedRoute,private _dataService: DataService) {
     
 
     
@@ -28,9 +29,9 @@ export class UpdateComponent implements OnInit {
 
 getMatches(){
   
-  this.http.get < any > ("http://localhost:3000/getmatches", { headers:this.httpOptions,params:new HttpParams().set('id', this.id)}).subscribe(({
-    data
-  }) => {
+  this._dataService.getAll(this.httpOptions,"getmatches").subscribe((
+    data:any
+  ) => {
    
     console.log(data);
    this.matchups=data;
@@ -49,12 +50,13 @@ getMatches(){
       this.id = +params['id']; // (+) converts string 'id' to a number
       console.log(this.id);
   });
-    this.httpOptions = {
-      headers: new HttpHeaders({
-        'Content-Type': 'application/json',
-        'token': localStorage.getItem("currentUser")
-      })
-    };
+  this.httpOptions = {
+    headers: new HttpHeaders({
+      'Content-Type': 'application/json',
+      'token': localStorage.getItem("currentUser")
+    }),
+    params: new HttpParams().set("id",this.id)
+  };
   this.getMatches();
 
   }
@@ -62,7 +64,7 @@ getMatches(){
    if(this.matchupform.value!=""){
     console.log(this.matchupform.value);
    }
-   this.http.post("http://localhost:3000/update",this.matchupform.value)
+   this._dataService.add(this.matchupform.value,"update")
     .subscribe(
         (val) => {
         
