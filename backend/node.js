@@ -6,6 +6,7 @@ const app = express()
 const jwt = require('jsonwebtoken');
 
 
+
 var connection = mysql.createConnection({
   host: 'localhost',
   user: 'zankr',
@@ -24,7 +25,7 @@ app.use(bodyParser.urlencoded({
 app.use(bodyParser.json());
 
 function checkTokenWithPromise(req){
-  return new Promise(resolve, reject => {
+  return new Promise((resolve, reject) => {
     var token = req.headers['token'];
     if (token) {
       jwt.verify(token, "asd", function(err, decoded) {
@@ -38,7 +39,7 @@ function checkTokenWithPromise(req){
     }
   });
 }
-
+/*
 function checkTokenWithCallback(req, callback) {
   var token = req.headers['token'];
   if (token) {
@@ -52,12 +53,12 @@ function checkTokenWithCallback(req, callback) {
     });
   }
 }
+*/
 
 
 app.get('/igralci', function(req, res) {
   checkTokenWithPromise(req).then(user => {
-    // verifies secret and checks exp 
-    // if everything is good, save to request for use in other routes   
+
     connection.query('SELECT igralec.ime,id_igralec FROM igralci_turnir INNER JOIN igralec on igralec.id_igralec=igralci_turnir.igralec WHERE turnir="'+req.query.id+'" ORDER BY rand()', function(err, results) {
       if (err) throw err
       var data = results;
@@ -70,147 +71,177 @@ app.get('/igralci', function(req, res) {
 
 
 app.get('/getmatches', function(req, res) {
-  checkTokenWithCallback(req, (err, user) => {
-    if(!err) {
-      console.log("turnir: "+req.query.id);
-      // if everything is good, save to request for use in other routes
+  checkTokenWithPromise(req).then(user => {
       connection.query('SELECT *,(select ime FROM igralec WHERE id_igralec=home) as home_ime,(select ime FROM igralec WHERE id_igralec=away) as away_ime FROM matchup INNER JOIN turnir on matchup.turnir=turnir.id_turnir WHERE rezultat="" and turnir="'+req.query.id+'" ', function(err, results) {
         if (err) throw err
         var data = results;
         res.send(data);
       });
-    } else {
+    }, err => {
       console.log("No such user. Error: " + err);
-    }
-  });
+    });
+  
 });
 
 app.get('/ifdrawn', function(req, res) {
 
-  var token = req.headers['token'];
-checkToken(req,res);
-  if (valid) {
-    
-    // verifies secret and checks exp
+  checkTokenWithPromise(req).then(user => {
 
-    
-        // if everything is good, save to request for use in other routes
-     
         connection.query('SELECT isDrawn FROM turnir WHERE id_turnir="'+req.query.id+'"', function(err, results) {
           if (err) throw err
-          console.log(results);
+
           var data = results;
           res.send(data);
-          console.log(data);
+        
         });
       
+      }, err => {
+        console.log("No such user. Error: " + err);
+      });
   
-  }
 });
 app.get('/getTours', function(req, res) {
 
-
-checkToken(req,res);
-console.log(user);
-  if (valid) {
-    // verifies secret and checks exp
-
-    
-        // if everything is good, save to request for use in other routes
-     
-        connection.query('SELECT * FROM turnir WHERE user="'+user+'" and isFinished!=1 ', function(err, results) {
+  checkTokenWithPromise(req).then(user => {
+     var sql='SELECT * FROM turnir WHERE user=? and isFinished!=1 ';
+        connection.query(sql,[user], function(err, results) {
           if (err) throw err
           var data = results;
           res.send(data);
-       
         });
-      
-  
-  }
+      }, err => {
+        console.log("No such user. Error: " + err);
+      });
 });
+
 app.get('/nextround', function (req, res) {
 
-
-
-  checkToken(req,res);
-
-  if (valid) {
-       
-        console.log("nextround"+req.query.id);
-        var sql="SELECT num_rounds,max(matchup.round) as max FROM turnir INNER JOIN matchup on matchup.turnir=turnir.id_turnir WHERE id_turnir='"+req.query.id+"' and rezultat!='' ";
-        connection.query(sql, function(err, result) {
-          if(err) throw err
-          console.log(result);
-          if(result[0].num_rounds==result[0].max){
-            var sql2="SELECT (CASE WHEN home = rezultat THEN away ELSE home END) as tretje_mesto,turnir FROM tenis.matchup WHERE turnir='"+req.query.id+"' and round=(select max(round)-1  FROM matchup WHERE turnir='"+req.query.id+"')  ;";
-        connection.query(sql2, function(err, result) {
-          if(err) throw err
+  checkTokenWithPromise(req).then(user => {
+    var id = req.query.id;
+    var sql = "SELECT num_rounds,max(matchup.round) as max FROM turnir INNER JOIN matchup on matchup.turnir=turnir.id_turnir WHERE id_turnir=? and rezultat!='' ";
+    connection.query(sql, [id], function (err, result) {
+      if (err) throw err
+      console.log(result);
+      if (result[0].num_rounds == result[0].max) {
+        var sql2 = "SELECT (CASE WHEN home = rezultat THEN away ELSE home END) as tretje_mesto,turnir FROM tenis.matchup WHERE turnir=? and round=(select max(round)-1  FROM matchup WHERE turnir=?)  ;";
+        connection.query(sql2, [id, id], function (err, result) {
+          if (err) throw err
           console.log(result);
           res.write(JSON.stringify(result));
           res.end();
         });
-      
-          }else{
-             var sql2="SELECT round,rezultat,turnir,floor(position/2) as position,away,home FROM matchup WHERE (advanced=0 and turnir='"+req.query.id+"') or away=null or home=null ";
-        connection.query(sql2, function(err, result) {
-          if(err) throw err
-          
+      } else {
+        var sql2 = "SELECT round,rezultat,turnir,floor(position/2) as position,away,home FROM matchup WHERE (advanced=0 and turnir=?) or away=null or home=null ";
+        connection.query(sql2, [id], function (err, result) {
+          if (err) throw err
           res.write(JSON.stringify(result));
           res.end();
         });
-          }
-        });
+      }
+    });
 
-};
+  }, err => {
+    console.log("No such user. Error: " + err);
+  });
+
 });
 app.get("/getAllMatches",function(req,res){
-checkToken(req,res);
-if(valid){
-  var sql="SELECT id_matchup,round,rezultat,home as home_id,away as away_id,turnir,num_rounds,CASE WHEN A.ime IS NULL THEN 'bye' ELSE A.ime END AS away,CASE WHEN H.ime IS NULL THEN 'bye' ELSE H.ime END AS home,R.ime as rezultat_ime  FROM tenis.matchup INNER JOIN turnir on turnir.id_turnir=matchup.turnir LEFT JOIN igralec H on H.id_igralec=matchup.home LEFT JOIN igralec A on A.id_igralec=matchup.away INNER JOIN igralec R on R.id_igralec=matchup.rezultat  WHERE turnir='"+req.query.id+"'" ;
-  connection.query(sql, function(err, result) {
+checkTokenWithPromise(req).then(user => {
+
+  var sql="SELECT id_matchup,round,rezultat,home as home_id,away as away_id,turnir,num_rounds,CASE WHEN A.ime IS NULL THEN 'bye' ELSE A.ime END AS away,CASE WHEN H.ime IS NULL THEN 'bye' ELSE H.ime END AS home,R.ime as rezultat_ime  FROM tenis.matchup INNER JOIN turnir on turnir.id_turnir=matchup.turnir LEFT JOIN igralec H on H.id_igralec=matchup.home LEFT JOIN igralec A on A.id_igralec=matchup.away INNER JOIN igralec R on R.id_igralec=matchup.rezultat  WHERE turnir=?" ;
+  connection.query(sql,[req.query.id], function(err, result) {
     if(err) throw err
-    console.log(result);
     res.send(result);
   });
 
+}, err => {
+  console.log("No such user. Error: " + err);
+});
 
-}
 });
 
 
 app.post('/addPlayer', function(request, response) {
-  var ime=request.body[0].ime;
-  var turnir=request.body[0].turnir;
-  response.json();
-  var sql1='INSERT INTO igralec (ime) VALUES ("' + ime + '")';
-  var sql2='INSERT INTO igralci_turnir (igralec,turnir) VALUES (?,?)';
-  connection.query(sql1, function(err, result) {
-    if (err) throw err
-    
-    connection.query(sql2,[result.insertId,turnir], function(err2, result2) {
-      if (err) throw err
-  });
+
+  checkTokenWithPromise(request).then(user => {
+    var ime = request.body[0].ime;
+    var turnir = request.body[0].turnir;
+
+    var sql1 = 'INSERT INTO igralec (ime) VALUES (?)';
+    var sql2 = 'INSERT INTO igralci_turnir (igralec,turnir) VALUES (?,?)';
+
+    var insertPlayer = new Promise(function (resolve, reject) {
+      connection.query(sql1, [ime], function (err, result) {
+        if (err) {
+          reject(err);
+        }
+        resolve(result);
+      });
+    });
+
+    insertPlayer.then(result => {
+      connection.query(sql2, [result.insertId, turnir], function (err2, result2) {
+        if (err2) throw err2
+        response.status = 200;
+        response.send(result2);
+      });
+
+
+    }, err => {
+      console.log("query failed" + err);
+      response.status = 404;
+    });
+
+  }, err => {
+    console.log("No such user. Error: " + err);
+    response.status = 401;
   });
   
 });
-app.post('/matchups', function(request, response) {
-  console.log(request.body["matchups"]);
-  response.json();  console.log(request.body.length);
- 
-  var sql1="INSERT INTO matchup (home,away,round,rezultat,turnir,position,advanced) VALUES ?";
-  var sql2="UPDATE turnir set isDrawn=1,num_rounds='"+request.body['rounds']+"' WHERE id_turnir='"+request.body['matchups'][0][4]+"'";
-  var sql3="UPDATE matchup set advanced=1 WHERE turnir='"+request.body["matchups"][0][4]+"' and rezultat in (SELECT * FROM(SELECT home FROM matchup where round>1 and rezultat='' )asd) or rezultat in (SELECT * FROM(SELECT away FROM matchup where round>1 and rezultat='' )asd) "
-  connection.query(sql1,[request.body["matchups"]], function(err, result) {
-    if(err) throw err
-    connection.query(sql2, function(err, result) {
-      if(err) throw err
-    });
-  });
-  connection.query(sql3, function(err, result) {
-    if(err) throw err
-  });
 
+app.post('/matchups', function(request, response) {
+
+ var id=request.body["matchups"][0][4];
+ var num_rounds=request.body['rounds'];
+
+  var sql1="INSERT INTO matchup (home,away,round,rezultat,turnir,position,advanced) VALUES ?";
+  var sql2="UPDATE turnir set isDrawn=1,num_rounds=? WHERE id_turnir=?";
+ 
+  var insertMatchups = new Promise(function (resolve, reject) {
+  connection.query(sql1,[request.body["matchups"]], function(err, result) {
+    if(err){
+      reject(err);
+    }else{
+      resolve(result);
+      console.time("prvi query");
+      console.timeEnd('prvi query');
+    }
+  });
 });
+var updateTurnir = new Promise(function (resolve, reject) {
+  connection.query(sql2,[num_rounds,id], function(err, result) {
+    if(err){
+      reject(err);
+    }else{
+      resolve(result);
+      console.time("drugi query");
+      console.timeEnd('drugi query');
+    }
+  });
+});
+
+insertMatchups.then(result=>{
+updateTurnir.then(values=>{
+  
+console.log(values);
+console.log(result);
+});
+}, err => {
+      console.log("query failed" + err);
+      response.status = 404;
+    });
+});
+
 app.post('/nextroundMatches', function(request, response) {
   
   response.json();  console.log(request.body.length);
@@ -261,17 +292,16 @@ app.post('/api/users', function(request, response) {
 });
 
 app.post('/createTour', function(req, res) {
-  console.log(req.body.user);
- 
-checkToken(req,res);
-  if(valid){
-    console.log("valid");
+  checkTokenWithPromise(req).then(user => {
+   
     var sql="INSERT INTO turnir (datum,user,kraj,isDrawn) VALUES (?,?,?,0)";
     connection.query(sql,[req.body.datum,req.body.user,req.body.kraj], function(err, result) {
       if(err) throw err
       res.json();
     });
-  }
+  },err=>{
+    console.log("insert failed"+err);
+  });
 });
 
 
