@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators,FormControl,FormArray } from '@angular/forms';
 import { HttpClient,HttpHeaders,HttpParams } from '@angular/common/http';
 import { asTextData } from '@angular/core/src/view';
-import { ActivatedRoute } from '@angular/router';
+import { Router,ActivatedRoute } from '@angular/router';
 import { nextTick } from 'q';
 import { ResourceLoader } from '@angular/compiler';
 import {DataService} from '../data-service.service';
@@ -14,7 +14,7 @@ import {DataService} from '../data-service.service';
 })
 export class UpdateComponent implements OnInit {
 
-  constructor(private http: HttpClient,private route: ActivatedRoute,private _dataService: DataService) {
+  constructor(private http: HttpClient,private route: ActivatedRoute,private _dataService: DataService,    private router: Router,) {
     
 
     
@@ -35,6 +35,10 @@ getMatches(){
    
     console.log(data);
    this.matchups=data;
+   if(this.matchups.length==0){
+     
+    this.router.navigate(["/tournament/"+this.id]);
+   }
    this.matchupform=new FormGroup({ 'arr': this.arr });
    
    for(var i=0; i < this.matchups.length; i++){
@@ -44,6 +48,7 @@ getMatches(){
   });
  
 }
+
 
   ngOnInit() {
     this.sub = this.route.params.subscribe(params => {
@@ -70,6 +75,8 @@ getMatches(){
         
             console.log("POST call successful value returned in body", 
                         val);
+                        this.matchupform.reset();
+                       
                       this.getMatches(); 
         },
         response => {

@@ -1,7 +1,7 @@
 <button ><a class="nav-item nav-link " [routerLink]="['update']">Matchups</a></button>
 <button (click)="generateDraw()" class="btn btn-primary" >GenerateDraw</button>
-
-<form [formGroup]="igralec" (ngSubmit)="dodajIgralca()">
+<div *ngIf="test">{{test.isDrawn}}
+<form [formGroup]="igralec" *ngIf={{test.isDrawn}}   (ngSubmit)="dodajIgralca()">
     <div class="form-group">
       <label for="exampleInputEmail1">Ime</label>
       <input type="email" class="form-control"  formControlName="ime" id="exampleInputEmail1" aria-describedby="emailHelp" placeholder="Vnesi ime">
@@ -10,7 +10,7 @@
     {{igralec.value | json}}
     <button type="submit" class="btn btn-primary">Submit</button>
   </form>
-
+</div>
   <div  *ngIf="matchups" >
     <ul *ngFor="let matchup of matchups">
       <h1>Round:{{matchup.round}}</h1>

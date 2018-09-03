@@ -3,6 +3,8 @@ import { ActivatedRoute } from '@angular/router';
 import { FormBuilder, FormGroup, Validators,FormControl } from '@angular/forms';
 import { HttpClient,HttpHeaders,HttpParams } from '@angular/common/http';
 import { DataService } from '../data-service.service';
+import { delay } from 'rxjs/internal/operators';
+
 
 @Component({
   selector: 'app-details',
@@ -16,12 +18,14 @@ export class DetailsComponent implements OnInit {
   httpOptions = {};
   podatkiIgralca = [];
   matchups=[];
+  test;
   igralec = new FormGroup({
     ime: new FormControl()
   });
   constructor(private http: HttpClient, private route: ActivatedRoute, private _dataService: DataService) {
 
   }
+  
 
   ngOnInit() {
     this.sub = this.route.params.subscribe(params => {
@@ -37,13 +41,31 @@ export class DetailsComponent implements OnInit {
     });
     this.nextRound();
     this.getAllMatches();
+ 
   }
-
-  generateDraw() {
-    var isDrawn;
+ifDrawn(){
+  return new Promise((resolve, reject) => {
+   
     this._dataService.getAll(this.httpOptions, "ifdrawn").subscribe((
       data: any
     ) => {
+     resolve(data);
+     this.test=data[0];
+    });
+   });
+
+  }
+  ifDrawn2(){
+    var data2;
+     
+   return   this._dataService.getAll(this.httpOptions, "ifdrawn");
+  
+  
+    }
+  generateDraw() {
+    console.log(this.ifDrawn2());
+     var isDrawn;
+   this.ifDrawn2().subscribe(data => {
       isDrawn = data[0].isDrawn;
       if (isDrawn != 1) {
         var matchups = [];
@@ -91,6 +113,7 @@ export class DetailsComponent implements OnInit {
           this._dataService.add(matchups_rounds, "matchups")
             .subscribe(
               (val) => {
+                this.nextRound();
                 console.log("POST call successful value returned in body",
                   val);
               },
@@ -105,7 +128,7 @@ export class DetailsComponent implements OnInit {
         console.log("Was drawn");
       }
     });
-    this.nextRound();
+    
 
   }
   dodajIgralca() {
@@ -121,6 +144,7 @@ export class DetailsComponent implements OnInit {
           (val) => {
             console.log("POST call successful value returned in body",
               val);
+              this.igralec.reset();
           },
           response => {
             console.log("POST call in error", response);
@@ -128,14 +152,12 @@ export class DetailsComponent implements OnInit {
           () => {
             console.log("The POST observable is now completed.");
           });
-      this.igralec.reset();
+      
     }
   }
   nextRound() {
     var isDrawn;
-    this._dataService.getAll(this.httpOptions, "ifdrawn").subscribe((
-      data: any
-    ) => {
+    this.ifDrawn().then(data => {
       isDrawn = data[0].isDrawn;
       if (isDrawn == 1) {
         this._dataService.getAll(this.httpOptions, "nextround").subscribe((
@@ -146,7 +168,8 @@ export class DetailsComponent implements OnInit {
           let count = data.length;
           let pair = 0;
           let a;
-          if (data[0].tretje_mesto) {
+          console.log(data);
+          if (data[0].tretje!="false") {
             matchups.push([data[0].tretje_mesto, data[1].tretje_mesto, 66, "", this.id, 0, 0]);
             pair++;
           } else {

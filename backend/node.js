@@ -131,9 +131,12 @@ app.get('/nextround', function (req, res) {
           res.end();
         });
       } else {
-        var sql2 = "SELECT round,rezultat,turnir,floor(position/2) as position,away,home FROM matchup WHERE (advanced=0 and turnir=?) or away=null or home=null ";
+        var sql2 = "SELECT round,rezultat,turnir,floor(position/2) as position,'false' as tretje,away,home FROM matchup WHERE (advanced=0 and turnir=?) or away=null or home=null ";
         connection.query(sql2, [id], function (err, result) {
           if (err) throw err
+       
+        
+          console.log(result);
           res.write(JSON.stringify(result));
           res.end();
         });
@@ -168,7 +171,7 @@ app.post('/addPlayer', function(request, response) {
     var turnir = request.body[0].turnir;
 
     var sql1 = 'INSERT INTO igralec (ime) VALUES (?)';
-    var sql2 = 'INSERT INTO igralci_turnir (igralec,turnir) VALUES (?,?)';
+    //var sql2 = 'INSERT INTO igralci_turnir (igralec,turnir) VALUES (?,?)';
 
     var insertPlayer = new Promise(function (resolve, reject) {
       connection.query(sql1, [ime], function (err, result) {
@@ -179,7 +182,7 @@ app.post('/addPlayer', function(request, response) {
       });
     });
 
-    insertPlayer.then(result => {
+   /* insertPlayer.then(result => {
       connection.query(sql2, [result.insertId, turnir], function (err2, result2) {
         if (err2) throw err2
         response.status = 200;
@@ -190,7 +193,7 @@ app.post('/addPlayer', function(request, response) {
     }, err => {
       console.log("query failed" + err);
       response.status = 404;
-    });
+    });*/
 
   }, err => {
     console.log("No such user. Error: " + err);
@@ -199,63 +202,76 @@ app.post('/addPlayer', function(request, response) {
   
 });
 
-app.post('/matchups', function(request, response) {
+app.post('/matchups', function (request, response) {
 
- var id=request.body["matchups"][0][4];
- var num_rounds=request.body['rounds'];
-
-  var sql1="INSERT INTO matchup (home,away,round,rezultat,turnir,position,advanced) VALUES ?";
-  var sql2="UPDATE turnir set isDrawn=1,num_rounds=? WHERE id_turnir=?";
- 
+  var id = request.body["matchups"][0][4];
+  var num_rounds = request.body['rounds'];
+  var sql1 = "INSERT INTO matchup (home,away,round,rezultat,turnir,position,advanced) VALUES ?";
+  var sql2 = "UPDATE turnir set isDrawn=1,num_rounds=? WHERE id_turnir=?";
   var insertMatchups = new Promise(function (resolve, reject) {
-  connection.query(sql1,[request.body["matchups"]], function(err, result) {
-    if(err){
-      reject(err);
-    }else{
-      resolve(result);
-      console.time("prvi query");
-      console.timeEnd('prvi query');
-    }
-  });
-});
-var updateTurnir = new Promise(function (resolve, reject) {
-  connection.query(sql2,[num_rounds,id], function(err, result) {
-    if(err){
-      reject(err);
-    }else{
-      resolve(result);
-      console.time("drugi query");
-      console.timeEnd('drugi query');
-    }
-  });
-});
-
-insertMatchups.then(result=>{
-updateTurnir.then(values=>{
-  
-console.log(values);
-console.log(result);
-});
-}, err => {
-      console.log("query failed" + err);
-      response.status = 404;
+    connection.query(sql1, [request.body["matchups"]], function (err, result) {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(result);
+      }
     });
+  });
+  var updateTurnir = new Promise(function (resolve, reject) {
+    connection.query(sql2, [num_rounds, id], function (err, result) {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(result);
+      }
+    });
+  });
+  insertMatchups.then(result => {
+    updateTurnir.then(values => {
+      response.json();
+      console.log(values);
+      console.log(result);
+    });
+  }, err => {
+    console.log("query failed" + err);
+    response.status = 404;
+  });
 });
 
 app.post('/nextroundMatches', function(request, response) {
-  
-  response.json();  console.log(request.body.length);
+  console.log(request.body);
+  var id = request.body[0][4];
+ 
  
   var sql1="INSERT INTO matchup (home,away,round,rezultat,turnir,position,advanced) VALUES ?";
-  var sql3="UPDATE matchup set advanced=1 WHERE turnir='"+request.body[0][4]+"' and rezultat in (SELECT * FROM(SELECT home FROM matchup where round>1 and rezultat='' )asd) or rezultat in (SELECT * FROM(SELECT away FROM matchup where round>1 and rezultat='' )asd) "
-  connection.query(sql1,[request.body], function(err, result) {
-    if(err) throw err
+  var sql3="UPDATE matchup set advanced=1 WHERE turnir=? and rezultat in (SELECT * FROM(SELECT home FROM matchup where round>1 and rezultat='' and turnir=? )asd) or rezultat in (SELECT * FROM(SELECT away FROM matchup where round>1 and rezultat='' and turnir=? )asd) ";
+  
+  var insertNextRound = new Promise(function (resolve, reject) {
+     connection.query(sql1,[request.body], function(err, result) {
+    if(err){
+      reject(err);
+    }else{
+      console.log(result);
+      resolve(result);
+    }
   });
-  connection.query(sql3, function(err, result) {
-    if(err) throw err
+    });
+  
+ insertNextRound.then(result=>{
+ connection.query(sql3,[id,id,id], function(err, result) {
+    if(err){
+      response.status=400;
+      console.log("error");
+      console.log(err);
+    }else{
+      console.log("success");
+      console.log(result);
+      response.send(result);
+    }
   });
-
+ });
 });
+
 app.post('/update', function(request, response) {
   console.log(request.body.arr);
  

@@ -4,6 +4,7 @@
    
     <div formArrayName="arr" *ngFor="let matchup of matchups;let i=index " >
      <div class="form-check form-check-inline">
+       {{matchup.round}}
          <input class="form-check-input" [formControlName]="i" id="matchup.id_matchup" type="radio" id="inlineRadio1" value={{matchup.home}} >
          <label class="form-check-label" for="inlineRadio1">{{matchup.home_ime}}</label>
           VS
